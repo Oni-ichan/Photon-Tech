@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gradient-to-br from-sky-50 to-blue-100">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Webhook Extractor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .fade-in {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.6s ease-out forwards;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body class="min-h-screen font-sans text-gray-800">
+    <div class="max-w-4xl mx-auto px-4 py-16 space-y-10">
+      <div class="text-center">
+        <h1 class="text-5xl font-extrabold text-blue-700 drop-shadow">
+          🔗 Smart Image Extractor
+        </h1>
+        <p class="mt-2 text-gray-600 text-lg">
+          Paste any link and let the webhook magic begin.
+        </p>
+      </div>
+
+      <div class="flex flex-col md:flex-row gap-4 items-center justify-center">
+        <input
+          id="urlInput"
+          type="text"
+          placeholder="Paste your link here..."
+          class="flex-1 px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+        <button
+          onclick="sendToWebhook()"
+          class="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl shadow hover:scale-105 transition duration-300 font-medium"
+        >
+          Send to Webhook
+        </button>
+      </div>
+
+      <div id="loading" class="text-center text-blue-600 hidden">
+        🔄 Contacting the webhook...
+      </div>
+
+      <div id="result" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </div>
+
+    <script>
+      async function sendToWebhook() {
+        const url = document.getElementById("urlInput").value.trim();
+        const loading = document.getElementById("loading");
+        const result = document.getElementById("result");
+
+        result.innerHTML = "";
+        loading.classList.remove("hidden");
+
+        if (!url) {
+          alert("Please enter a valid URL!");
+          loading.classList.add("hidden");
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            "https://ssss23323.app.n8n.cloud/webhook/image-extract",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url }),
+            }
+          );
+
+          const data = await response.json();
+          const images = data.images || [];
+
+          if (images.length === 0) {
+            result.innerHTML =
+              '<p class="text-center col-span-full text-red-600 text-lg">No images found 😕</p>';
+          } else {
+            images.forEach((src, index) => {
+              const card = document.createElement("div");
+              card.className =
+                "bg-white rounded-xl p-4 shadow fade-in border border-gray-100";
+
+              const label = document.createElement("p");
+              label.className = "text-gray-500 mb-2 text-sm";
+              label.textContent = `Image ${index + 1}`;
+
+              const img = document.createElement("img");
+              img.src = src;
+              img.alt = `Image ${index + 1}`;
+              img.className =
+                "w-full max-h-[300px] object-contain rounded-lg";
+
+              card.appendChild(label);
+              card.appendChild(img);
+              result.appendChild(card);
+            });
+          }
+        } catch (error) {
+          alert("Something went wrong.");
+          console.error(error);
+        } finally {
+          loading.classList.add("hidden");
+        }
+      }
+    </script>
+  </body>
+</html>
